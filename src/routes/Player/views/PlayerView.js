@@ -3,7 +3,7 @@ import { useSelector, useStore } from 'react-redux'
 import { injectReducer } from 'store/reducers'
 import playerReducer from '../modules/player'
 import playerVisualizerReducer from '../modules/playerVisualizer'
-
+import playerRemoteControlQRReducer from '../modules/playerRemoteControlQR'
 import PlayerController from '../components/PlayerController'
 import screenfull from 'screenfull'
 import styles from './PlayerView.css'
@@ -17,6 +17,7 @@ const PlayerView = (props) => {
   if (!useSelector(state => state.player)) {
     injectReducer(store, { key: 'player', reducer: playerReducer })
     injectReducer(store, { key: 'playerVisualizer', reducer: playerVisualizerReducer })
+    injectReducer(store, { key: 'playerRemoteControlQR', reducer: playerRemoteControlQRReducer })
   }
 
   return (

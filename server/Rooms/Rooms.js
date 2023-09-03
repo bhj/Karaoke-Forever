@@ -1,6 +1,7 @@
 const bcrypt = require('../lib/bcrypt')
 const db = require('../lib/Database').db
 const sql = require('sqlate')
+const crypto = require('crypto');
 
 class Rooms {
   /**
@@ -34,6 +35,60 @@ class Rooms {
   }
 
   /**
+   * Find room
+   *
+   * @param  {Integer}  roomId  ID of room to fetch
+   * @return {Promise}
+   */
+  static async getRoom (roomId) {
+    let entity = {}
+    const whereClause = sql`roomId = ${roomId}`
+
+    const query = sql`
+      SELECT * FROM rooms
+      WHERE ${whereClause}
+    `
+    const row = await db.get(String(query), query.parameters)
+
+
+    if (!row) {
+      throw new Error('Room not found')
+    }
+
+    row.dateCreated = row.dateCreated.substring(0, 10)
+    row.hasPassword = !!row.password
+
+    row.token = this.generateToken(row)
+
+    delete row.password
+
+    entity = row
+
+
+    return { entity }
+  }
+
+  static generateToken (room) {
+    const secret = room.password;
+    const payload = {
+      id: room.id,
+      status: room.status,
+      name: room.name
+    };
+    const token = crypto.createHmac('sha256', secret)
+      .update(JSON.stringify(payload))
+      .digest('hex');
+
+    return token;
+  } 
+
+  static verifyToken (room, token) {
+    const verifyToken = this.generateToken(room);
+
+    return token === verifyToken;
+  }
+
+  /**
    * Validate a room against optional criteria
    *
    * @param  {Number}    roomId
@@ -61,7 +116,7 @@ class Rooms {
         throw new Error('Room password is required')
       }
 
-      if (!await bcrypt.compare(password, room.password)) {
+      if (!await bcrypt.compare(password, room.password) && !this.verifyToken(room, password)) {
         throw new Error('Incorrect room password')
       }
     }

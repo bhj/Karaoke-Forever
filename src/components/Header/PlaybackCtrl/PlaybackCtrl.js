@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import screenfull from 'screenfull'
@@ -8,6 +8,7 @@ import VolumeSlider from './VolumeSlider'
 import NoPlayer from './NoPlayer'
 import DisplayCtrl from './DisplayCtrl'
 import styles from './PlaybackCtrl.css'
+import { fetchRoom } from 'store/modules/room'
 
 const handleFullscreen = () => {
   if (screenfull.isEnabled) {
@@ -21,6 +22,8 @@ const PlaybackCtrl = props => {
   const isInRoom = useSelector(state => state.user.roomId !== null)
   const status = useSelector(state => state.status)
   const ui = useSelector(state => state.ui)
+  const user = useSelector(state => state.user)
+  const room = useSelector(state => state.room.entity)
 
   const location = useLocation()
   const isPlayer = location.pathname.replace(/\/$/, '').endsWith('/player')
@@ -31,6 +34,15 @@ const PlaybackCtrl = props => {
   const handlePlay = useCallback(() => dispatch(requestPlay()), [dispatch])
   const handlePlayNext = useCallback(() => dispatch(requestPlayNext()), [dispatch])
   const handleVolume = useCallback(val => dispatch(requestVolume(val)), [dispatch])
+
+
+
+
+  // once per mount
+  useEffect(() => {
+    dispatch(fetchRoom(user.roomId))
+  }, [dispatch])
+
 
   const [isDisplayCtrlVisible, setDisplayCtrlVisible] = useState(false)
   const toggleDisplayCtrl = useCallback(() => {
@@ -93,6 +105,11 @@ const PlaybackCtrl = props => {
         sensitivity={status.visualizer.sensitivity}
         ui={ui}
         visualizerPresetName={status.visualizer.presetName}
+        isRemoteControlQREnabledAllowed={(room.remoteControlQREnabled) ? true : false}
+        isRemoteControlQREnabled={status.remoteControlQR.isEnabled}
+        isRemoteControlQRAlternateEnabled={status.remoteControlQR.alternate}
+        remoteControlTranslucency={status.remoteControlQR.opacity}
+        remoteControlSize={status.remoteControlQR.size}
       />
     </div>
   )

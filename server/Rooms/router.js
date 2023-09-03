@@ -65,13 +65,26 @@ router.post('/rooms', async (ctx, next) => {
   ctx.body = await Rooms.get(true)
 })
 
+// get room
+router.get('/rooms/:roomId', async (ctx, next) => {
+  // Only admin can fetch specific room, as password is included
+  if (!ctx.user.isAdmin) {
+    ctx.throw(401)
+  }
+
+  const roomId = parseInt(ctx.params.roomId, 10)
+  const res = await Rooms.getRoom(roomId)
+
+  ctx.body = res
+})
+
 // update room
 router.put('/rooms/:roomId', async (ctx, next) => {
   if (!ctx.user.isAdmin) {
     ctx.throw(401)
   }
 
-  const { name, password, status } = ctx.request.body
+  const { name, password, status, remoteControlQREnabled } = ctx.request.body
   const roomId = parseInt(ctx.params.roomId, 10)
 
   if (!name || !name.trim() || name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
@@ -89,6 +102,7 @@ router.put('/rooms/:roomId', async (ctx, next) => {
   const fields = new Map()
   fields.set('name', name.trim())
   fields.set('status', status)
+  fields.set('remoteControlQREnabled', remoteControlQREnabled)
   fields.set('roomId', roomId)
 
   // falsey value will unset password
